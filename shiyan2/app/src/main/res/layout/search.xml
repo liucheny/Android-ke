@@ -8,7 +8,7 @@
         <TextView android:text="搜索的单词" />
 
         <EditText
-            android:id="@+id/txtSearchWord"
+            android:id="@+id/Search"
             android:layout_width="match_parent" />
     </TableRow>
 

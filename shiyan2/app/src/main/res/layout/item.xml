@@ -15,17 +15,22 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Word"
-        android:id="@+id/textViewWord"/>
+        android:id="@+id/textViewWord"
+        android:textSize="@dimen/abc_text_size_title_material" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Meaning"
-        android:id="@+id/textViewMeaning"/>
+        android:id="@+id/textViewMeaning"
+        android:layout_marginLeft="20dp"
+        />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Sample"
-        android:id="@+id/textViewSample">
-
-    </TextView>
+        android:id="@+id/textViewSample"
+        android:layout_marginLeft="20dp"
+        />
 </LinearLayout>

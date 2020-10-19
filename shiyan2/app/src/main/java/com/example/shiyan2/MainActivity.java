@@ -18,9 +18,9 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TableLayout;
 import android.widget.TextView;
-
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -34,17 +34,16 @@ public class MainActivity extends AppCompatActivity {
         ListView list= (ListView)findViewById(R.id.listView1);
         registerForContextMenu(list);
         data = new WordsDBHelper(this);
-        ArrayList<Map<String, String>> items=getAll();
+        List<Map<String, String>> items=getAll();
         setWordsListView(items);
     }
 
-    protected void onDestry(){
+    protected void onDestroy() {
         super.onDestroy();
         data.close();
     }
-//增加适配器
 
-    private void setWordsListView(ArrayList<Map<String,String>>items){
+    private void setWordsListView(List<Map<String,String>>items){
         SimpleAdapter adapter= new SimpleAdapter(this,items,R.layout.item,
                 new String[]{Words.Word._ID,Words.Word.COLUMN_NAME_WORD,Words.Word.COLUMN_NAME_WORD,Words.Word.COLUMN_NAME_MEANING,
                         Words.Word.COLUMN_NAME_SAMPLE},
@@ -53,18 +52,42 @@ public class MainActivity extends AppCompatActivity {
         list.setAdapter(adapter);
 
     }
+    private List<Map<String, String>> getAll(){
+        SQLiteDatabase db=data.getReadableDatabase();
+        ArrayList<Map<String, String>> result = new ArrayList<>();
+        String[] words = {
+                Words.Word._ID,
+                Words.Word.COLUMN_NAME_WORD,
+                Words.Word.COLUMN_NAME_MEANING,
+                Words.Word.COLUMN_NAME_SAMPLE
+        };
+        String px =
+                Words.Word.COLUMN_NAME_WORD + " DESC";
+        Cursor cursor = db.query(Words.Word.TABLE_NAME, words, null, null, null, null, px);
+        while (cursor.moveToNext()) {//将Cursor对象转换为list 显示在listView
+            Map<String, String> map = new HashMap<>();
+            map.put(Words.Word._ID, String.valueOf(cursor.getInt(0)));
+            map.put(Words.Word.COLUMN_NAME_WORD, cursor.getString(1));
+            map.put(Words.Word.COLUMN_NAME_MEANING, cursor.getString(2));
+            map.put(Words.Word.COLUMN_NAME_SAMPLE, cursor.getString(3));
+            result.add(map);
+        }
+        return result;
+
+
+    }
+
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.find, menu);
         return true;
     }
-    public boolean OptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item) {
         int id=item.getItemId();
         switch (id) {
-            case R.id.action_search:
+            case R.id.search:
 
                 return true;
-            case R.id.action_insert:
+            case R.id.insert:
                 InsertDialog();
                return true;
         }
@@ -83,16 +106,17 @@ public class MainActivity extends AppCompatActivity {
         AdapterView.AdapterContextMenuInfo info=null;
         View itemView=null;
         switch (item.getItemId()){
-            case R.id.action_delete:
+            case R.id.delete:
                 info=(AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
                 itemView=info.targetView;
                 textId =(TextView)itemView.findViewById(R.id.textId);
                 if(textId!=null){
                     String strId=textId.getText().toString();
+                    DeleteDialog(strId);
                 }
-                DeleteDialog(strId);
+
                 break;
-            case R.id.action_update:
+            case R.id.update:
                 info=(AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
                 itemView=info.targetView;
                 textId =(TextView)itemView.findViewById(R.id.textId);
@@ -126,7 +150,10 @@ public class MainActivity extends AppCompatActivity {
                         String strWord = ((EditText) tableLayout.findViewById(R.id.txtWord)).getText().toString();
                         String strMeaning = ((EditText) tableLayout.findViewById(R.id.txtMeaning)).getText().toString();
                         String strSample = ((EditText) tableLayout.findViewById(R.id.txtSample)).getText().toString();
-                        InsertSql(strWord, strMeaning, strSample);
+                        Insert( strWord,strMeaning, strSample);
+                        InsertUserSql(strWord, strMeaning, strSample);
+                        List<Map<String, String>> items=getAll();
+                        setWordsListView(items);
 
                     }
                 })
@@ -174,7 +201,16 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+    private void Insert(String strWord, String strMeaning, String strSample) {
 
+
+        SQLiteDatabase db = data.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(Words.Word.COLUMN_NAME_WORD, strWord);
+        values.put(Words.Word.COLUMN_NAME_MEANING, strMeaning);
+        values.put(Words.Word.COLUMN_NAME_SAMPLE, strSample);
+        db.insert(Words.Word.TABLE_NAME, null, values);
+    }
 
     private void DeleteDialog(final String strId) {
         new AlertDialog.Builder(this).setTitle("删除单词").setMessage("是否真的删除单词?").setPositiveButton("确定", new DialogInterface.OnClickListener() {
@@ -195,36 +231,30 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void  InsertSql(String strWord, String strMeaning, String strSample){
+    private void InsertUserSql(String strWord, String strMeaning, String strSample){
         String sql="insert into  words(word,meaning,sample) values(?,?,?)";
+
         SQLiteDatabase db = data.getWritableDatabase();
         db.execSQL(sql,new String[]{strWord,strMeaning,strSample});
     }
     private void Update(String strId,String strWord, String strMeaning, String strSample){
         SQLiteDatabase db = data.getReadableDatabase();
-            // New value for one column
-        ContentValues values = new ContentValues();
+            ContentValues values = new ContentValues();
         values.put(Words.Word.COLUMN_NAME_WORD, strWord);
         values.put(Words.Word.COLUMN_NAME_MEANING, strMeaning);
         values.put(Words.Word.COLUMN_NAME_SAMPLE, strSample);
         String selection = Words.Word._ID + " = ?";
         String[] selectionArgs = {strId};
-        int count = db.update(
-                Words.Word.TABLE_NAME,
-                values,
-                selection,
-                selectionArgs);
+        int count = db.update(Words.Word.TABLE_NAME, values, selection, selectionArgs);
     }
 
     private void Delete(String strId) {
-        SQLiteDatabase db = data.getReadableDatabase();    // 定义where子句
+        SQLiteDatabase db = data.getReadableDatabase();
         String selection = Words.Word._ID + " = ?";
         String[] selectionArgs = {strId};
         db.delete(Words.Word.TABLE_NAME, selection, selectionArgs);
 
     }
-
-
 
 }
 
