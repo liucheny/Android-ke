@@ -230,11 +230,8 @@ public class MainActivity extends AppCompatActivity {
         String sql="update words set word=?,meaning=?,sample=? where _id=?";
         db.execSQL(sql, new String[]{strWord, strMeaning, strSample,strId});
     }
-    //使用Sql语句删除单词
     private void DeleteUseSql(String strId) {
         String sql="delete from words where _id='"+strId+"'";
-
-        //Gets the data repository in write mode*/
         SQLiteDatabase db = data.getReadableDatabase();
         db.execSQL(sql);
     }
