@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">My Application</string>
+
+        <string name="search">查找</string>
+        <string name="insert">增加</string>
+        <string name="delete">删除</string>
+        <string name="update">修改</string>
+</resources>
