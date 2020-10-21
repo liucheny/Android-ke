@@ -2,10 +2,9 @@ package com.example.myapplication;
 
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.AlertDialog;
-import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -19,6 +18,8 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TableLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
         ListView list = (ListView) findViewById(R.id.listView1);
         registerForContextMenu(list);
         data = new WordsDBHelper(this);
-        //在列表显示全部单词
         List<Map<String, String>> items=getAll();
         setWordsListView(items);
     }
@@ -43,16 +43,15 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         data.close();
     }
-    private void setWordsListView(List<Map<String, String>> items){
-        SimpleAdapter adapter = new SimpleAdapter(this, items, R.layout.item,
-                new String[]{Words.Word._ID,Words.Word.COLUMN_NAME_WORD, Words.Word.COLUMN_NAME_MEANING, Words.Word.COLUMN_NAME_SAMPLE},
+    private void setWordsListView(List<Map<String, String>> items){//适配器，在列表中显示单词
+        SimpleAdapter adapter = new SimpleAdapter(this, items, R.layout.item, new String[]{Words.Word._ID,Words.Word.COLUMN_NAME_WORD, Words.Word.COLUMN_NAME_MEANING, Words.Word.COLUMN_NAME_SAMPLE},
                 new int[]{R.id.textId,R.id.textViewWord, R.id.textViewMeaning, R.id.textViewSample});
 
         ListView list = (ListView) findViewById(R.id.listView1);
 
         list.setAdapter(adapter);
     }
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu) {//创建菜单
         getMenuInflater().inflate(R.menu.find, menu);
         return true;
     }
@@ -62,11 +61,9 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
         switch (id) {
             case R.id.search:
-                //查找
-
+                SearchDialog();
                 return true;
             case R.id.insert:
-                //新增单词
                 InsertDialog();
                 return true;
         }
@@ -116,7 +113,6 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-
     private List<Map<String, String>> getAll(){
         SQLiteDatabase db=data.getReadableDatabase();
         ArrayList<Map<String, String>> result = new ArrayList<>();
@@ -138,12 +134,7 @@ public class MainActivity extends AppCompatActivity {
             result.add(map);
         }
         return result;
-
-
     }
-
-
-
     private void InsertDialog() {
         final TableLayout tableLayout = (TableLayout) getLayoutInflater().inflate(R.layout.insert, null);
         new AlertDialog.Builder(this)
@@ -186,10 +177,10 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        String strNewWord = ((EditText) tableLayout.findViewById(R.id.txtWord)).getText().toString();
-                        String strNewMeaning = ((EditText) tableLayout.findViewById(R.id.txtMeaning)).getText().toString();
-                        String strNewSample = ((EditText) tableLayout.findViewById(R.id.txtSample)).getText().toString();
-                        UpdateUseSql(strId, strNewWord, strNewMeaning, strNewSample);
+                        String NewWord = ((EditText) tableLayout.findViewById(R.id.txtWord)).getText().toString();
+                        String NewMeaning = ((EditText) tableLayout.findViewById(R.id.txtMeaning)).getText().toString();
+                        String NewSample = ((EditText) tableLayout.findViewById(R.id.txtSample)).getText().toString();
+                        UpdateUseSql(strId, NewWord, NewMeaning, NewSample);
                         setWordsListView(getAll());
                     }
                 })
@@ -218,6 +209,38 @@ public class MainActivity extends AppCompatActivity {
             }
         }).create().show();
     }
+    private void SearchDialog() {
+        final TableLayout tableLayout = (TableLayout) getLayoutInflater().inflate(R.layout.search, null);
+        new AlertDialog.Builder(this)
+                .setTitle("查找单词")//标题
+                .setView(tableLayout)//设置视图
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String txtSearchWord=((EditText)tableLayout.findViewById(R.id.Search)).getText().toString();
+                        ArrayList<Map<String, String>> items=null;
+                       items=SearchUseSql(txtSearchWord);
+                        if(items.size()>0) {
+                            Bundle bundle=new Bundle();
+                            bundle.putSerializable("result",items);
+                            Intent intent=new Intent(MainActivity.this,SearchActivity.class);
+                            intent.putExtras(bundle);
+                            startActivity(intent);
+
+                        }else
+                            Toast.makeText(MainActivity.this,"没有找到", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                })
+                .create()//创建对话框
+                .show();//显示对话框
+
+    }
     private void InsertUserSql(String strWord, String strMeaning, String strSample){
         String sql="insert into  words(word,meaning,sample) values(?,?,?)";
 
@@ -234,6 +257,21 @@ public class MainActivity extends AppCompatActivity {
         String sql="delete from words where _id='"+strId+"'";
         SQLiteDatabase db = data.getReadableDatabase();
         db.execSQL(sql);
+    }
+    private ArrayList<Map<String, String>> SearchUseSql(String strWordSearch){
+        SQLiteDatabase db=data.getReadableDatabase();
+        ArrayList<Map<String, String>> result = new ArrayList<>();
+        String sql="select * from words where word like ? order by word desc";
+        Cursor cursor=db.rawQuery(sql,new String[]{"%"+strWordSearch+"%"});
+        while (cursor.moveToNext()) {
+            Map<String, String> map = new HashMap<>();
+            map.put(Words.Word._ID, String.valueOf(cursor.getInt(0)));
+            map.put(Words.Word.COLUMN_NAME_WORD, cursor.getString(1));
+            map.put(Words.Word.COLUMN_NAME_MEANING, cursor.getString(2));
+            map.put(Words.Word.COLUMN_NAME_SAMPLE, cursor.getString(3));
+            result.add(map);
+        }
+        return  result;
     }
 
 
