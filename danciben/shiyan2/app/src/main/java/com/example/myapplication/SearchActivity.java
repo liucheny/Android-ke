@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.Map;
 
 public class SearchActivity extends AppCompatActivity {
-    WordsDBHelper data;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.listsearch);
+
         Intent intent=getIntent();
         Bundle bundle=intent.getExtras();
         List<Map<String, String>> items= (List<Map<String, String>>) bundle.getSerializable("result");
@@ -25,7 +25,7 @@ public class SearchActivity extends AppCompatActivity {
         SimpleAdapter adapter = new SimpleAdapter(this, items, R.layout.item, new String[]{Words.Word._ID,Words.Word.COLUMN_NAME_WORD, Words.Word.COLUMN_NAME_MEANING, Words.Word.COLUMN_NAME_SAMPLE},
                 new int[]{R.id.textId,R.id.textViewWord, R.id.textViewMeaning, R.id.textViewSample});
 
-        ListView list = (ListView) findViewById(R.id.listView1);
+        ListView list = (ListView) findViewById(R.id.listView2);
 
         list.setAdapter(adapter);
     }
