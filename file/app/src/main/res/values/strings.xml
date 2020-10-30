@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">file</string>
+    <string name="btn_write">保存</string>
+    <string name="btn_read">读取文件</string>
+</resources>
