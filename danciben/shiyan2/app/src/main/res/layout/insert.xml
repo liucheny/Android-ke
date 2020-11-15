@@ -8,6 +8,7 @@
         <TextView android:text="单词" />
 
         <EditText
+            android:ems="15"
             android:id="@+id/txtWord"
             android:layout_width="match_parent" />
     </TableRow>
@@ -17,6 +18,7 @@
         <TextView android:text="含义" />
 
         <EditText
+            android:ems="15"
             android:id="@+id/txtMeaning"
             android:layout_width="match_parent" />
     </TableRow>
@@ -26,6 +28,7 @@
         <TextView android:text="示例" />
 
         <EditText
+            android:ems="15"
             android:id="@+id/txtSample"
             android:layout_width="match_parent" />
     </TableRow>
